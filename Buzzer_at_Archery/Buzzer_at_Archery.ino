@@ -23,7 +23,7 @@ void setup() {
 
 void loop() {
 
-  while(digitalRead(BT_pin) == !HIGH){
+  while(digitalRead(BT_pin) != HIGH){
     delay(10);
     digitalWrite(Light_pin,LOW);
   }
@@ -41,6 +41,14 @@ void loop() {
     for(int i=240; i>=0; i--){
       showLED(i);
       delay(1000);
+      if(digitalRead(BT_pin) == HIGH){
+        delay(10);
+        digitalWrite(Light_pin,LOW);
+        sound(1000);
+        delay(100);
+        software_Reset() ;// Reset
+      }
+      
   }
 
   digitalWrite(Light_pin,LOW); //เปิดไฟ
