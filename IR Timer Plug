@@ -1,0 +1,476 @@
+#include <IRremote.h>
+#include <EEPROM.h>
+
+#define RECV_PIN  9
+#define Relay 8
+#define PIN_LED 7
+#define BT 10
+
+IRrecv irrecv(RECV_PIN);
+
+decode_results results;
+
+
+bool state = false;
+
+uint8_t page = 0;
+unsigned long time_press = millis();
+
+//ฟังค์ชั่นตั้งเวลา
+bool timer = false; //เปิดฟังค์ชั่นตั้งเวลา
+unsigned long timer_count = 0; // เวลานับไปเรื่อยๆ สำหรับแสดง LED
+bool ledState = false; //แสดงเปิดปิด LED ของฟังค์ชั่นตั้งเวลา
+unsigned long timer_End = 0; //ตั้งเวลาจบ
+
+//ฟังค์ชั่น Debug
+bool Debug_print = true; //ไว้เปิดฟังค์ชั้น Serial.print
+
+void setup()
+{
+  if (Debug_print) {
+    Serial.begin(9600);
+  }
+
+  irrecv.enableIRIn(); // Start the receiver
+
+  pinMode(PIN_LED , OUTPUT);
+  pinMode(Relay , OUTPUT);
+  pinMode(BT , INPUT);
+
+  Serial_println(EEPROM.read(0) / 5);
+  for (int i = 1; i < EEPROM.read(0); i += 5) {
+    Serial_println(EEPROMReadlong(i));
+  }
+
+
+}
+
+void loop() {
+back:
+
+  switch (page) {
+    case 0: //working mode
+      if (digitalRead(BT) == HIGH) { //ถ้ากดปุ่ม ให้เปลี่ยนหน้า และเก็บค่าเวลาแรกที่กด
+        time_press = millis();
+        Serial_println("Hi");
+        digitalWrite(PIN_LED, HIGH);
+        page = 1;
+      }
+
+      if (timer) {
+        if (millis() - timer_count >= 1000) { //LED เปิดปิดทุก 1 วิ
+          timer_count = millis();
+          if (ledState == false) {
+            ledState = true;
+          } else {
+            ledState = false;
+          }
+          digitalWrite(PIN_LED, ledState);
+        }
+
+        if (millis() > timer_End) {
+          state = !state;
+          digitalWrite(PIN_LED, state);
+          digitalWrite(Relay, state);
+          timer = false;
+        }
+      }
+
+      if (irrecv.decode(&results)) {
+        Serial_println(results.value);
+        bool Check = false;
+        for (int i = 1; i < EEPROM.read(0); i += 5) {
+          if ( results.value == EEPROMReadlong(i)) {
+            Check = true;
+          }
+        }
+
+        if (Check) {
+          state = !state;
+          digitalWrite(PIN_LED, state);
+          digitalWrite(Relay, state);
+          //Serial_println(state);
+          delay(500);
+        } else {
+          LED(100);
+          digitalWrite(PIN_LED, state);
+        }
+        irrecv.resume(); // Receive the next value
+
+
+      }
+      delay(100);
+
+      break;
+
+    case 1:
+      if (digitalRead(BT) == LOW) { //กดแล้วปล่อย
+        if (millis() - time_press < 500) {
+          while (page = 1) {
+
+
+
+
+
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H1");                             //ตั้งเวลา10วิ
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer = true; //ทำฟังค์ชั่น ตั้งเวลา
+            timer_End = millis() + (10000);
+            time_press = millis() ;
+            Serial_print("///////////////////////1");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            delay(100);
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L1");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 10 sec success");
+                LED(1,500);
+                delay(1000);
+                goto back;
+              }
+            }
+
+
+
+
+
+
+            delay(100);
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H2");                         //ตั้งเวลา1นาที
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer_End = millis() + (60000);
+            time_press = millis() ;
+            Serial_print("///////////////////////2");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            Serial_print("timer_End_min : ");
+            Serial_println((timer_End / 1000) / 60);
+            delay(100);
+
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L2");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 1min success");
+                 LED(2,500);
+                 delay(1000);
+                goto back;
+              }
+            }
+            delay(100);
+
+
+
+
+
+
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H3");                         //ตั้งเวลา1ชม.
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer_End = millis() + (3600000);
+            time_press = millis() ;
+            Serial_print("///////////////////////3");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            Serial_print("timer_End_min : ");
+            Serial_println((timer_End / 1000) / 60);
+            delay(100);
+
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L3");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 1hr success");
+                LED(3,500);
+                delay(1000);
+                goto back;
+              }
+            }
+
+
+
+
+
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H4");                           //ตั้งเวลา2ชม.
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer_End = millis() + (7200000);
+            time_press = millis() ;
+            Serial_print("///////////////////////4");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            Serial_print("timer_End_min : ");
+            Serial_println((timer_End / 1000) / 60);
+            delay(100);
+
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L4");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 2hr success");
+                LED(4,500);
+                delay(1000);
+                goto back;
+              }
+            }
+
+
+
+
+
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H5");                              //ตั้งเวลา3ชม.
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer_End = millis() + (10800000);
+            time_press = millis() ;
+            Serial_print("///////////////////////5");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            Serial_print("timer_End_min : ");
+            Serial_println((timer_End / 1000) / 60);
+            delay(100);
+
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L5");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 3hr success");
+                LED(5,500);
+                delay(1000);
+                goto back;
+              }
+            }
+
+
+
+
+
+
+            while (digitalRead(BT) == HIGH) {
+              //Serial_println("H6");                           //ตั้งเวลา6ชม.
+              digitalWrite(PIN_LED, HIGH);
+            }
+            timer_End = millis() + (21600000);
+            time_press = millis() ;
+            Serial_print("///////////////////////6");
+            Serial_print("millis : ");
+            Serial_println(millis());
+            Serial_print("timer_End : ");
+            Serial_println(timer_End);
+            Serial_print("timer_End_min : ");
+            Serial_println((timer_End / 1000) / 60);
+            delay(100);
+
+loopSetTime:
+
+            while (digitalRead(BT) == LOW) {
+              digitalWrite(PIN_LED, LOW);
+              //Serial_println("L6");
+              if (millis() - time_press > 2000) {
+                page = 0;
+                Serial_println("go to 0");
+                Serial_println("set time 6hr success");
+                LED(6,100);
+                delay(1000);
+                goto back;
+              }
+            }
+
+            goto loopSetTime;
+
+
+          }
+          break;
+        }
+      }
+
+      if (millis() - time_press > 501) { //กดค้าง
+        Serial_println("long");
+        state = false;
+        digitalWrite(PIN_LED, false);
+        digitalWrite(Relay, false);
+        while (digitalRead(BT) == HIGH) {
+          LED(100);
+          Serial_println("while long");
+        }
+        page = 2;
+        delay(500);
+        Serial_println("goto page2");
+      }
+      break;
+
+    case 2:
+      while (digitalRead(BT) == LOW) {   //รอค่ารีโมท เพื่อที่จะจำค่า
+        LED(100);
+        if (irrecv.decode(&results)) {
+          Serial_print("Record = ");
+          Serial_println(results.value);
+          EEPROMWritelong(EEPROM.read(0), results.value);
+          EEPROM.write(0, EEPROM.read(0) + 5);
+          irrecv.resume(); // Receive the next value
+          delay(1000);
+          Serial_println("Sucess");
+          page = 0;
+          break;
+        }
+
+      }
+
+
+      if (digitalRead(BT) == HIGH) {   // กดค้างเพื่อ Reset
+        time_press = millis();
+        Serial_println("page press");
+
+        while (digitalRead(BT) == HIGH) {
+          if ( millis() - time_press > 1000) {
+            while (digitalRead(BT) == HIGH) {
+              digitalWrite(PIN_LED, HIGH);
+            }
+            for (int i = 0 ; i < EEPROM.length() ; i++) {
+              EEPROM.write(i, 0);
+            }
+            EEPROM.write(0, 1);
+            Serial_println("Clear");
+            delay(1000);
+            digitalWrite(PIN_LED, LOW);
+            LED(100);
+            LED(100);
+            LED(100);
+            Serial_println("End");
+            page = 0;
+          }
+        }
+      }
+      break;
+  }
+}
+
+
+void LED(int time_delay) {
+  digitalWrite(PIN_LED, HIGH);
+  delay(time_delay);
+  digitalWrite(PIN_LED, LOW);
+  delay(time_delay);
+}
+
+void LED(int number , int time_delay) {
+  for (int i = 0; i < number; i++) {
+    digitalWrite(PIN_LED, HIGH);
+    delay(time_delay);
+    digitalWrite(PIN_LED, LOW);
+    delay(time_delay);
+  }
+}
+
+
+void Serial_print(String text) {
+  if (Debug_print) {
+    Serial.print(text);
+  }
+}
+void Serial_print(unsigned int text) {
+  if (Debug_print) {
+    Serial.print(text);
+  }
+}
+void Serial_print(int text) {
+  if (Debug_print) {
+    Serial.print(text);
+  }
+}
+void Serial_print(long text) {
+  if (Debug_print) {
+    Serial.print(text);
+  }
+}
+void Serial_print(unsigned long text) {
+  if (Debug_print) {
+    Serial.print(text);
+  }
+}
+void Serial_println(String text) {
+  if (Debug_print) {
+    Serial.println(text);
+  }
+}
+void Serial_println(unsigned int text) {
+  if (Debug_print) {
+    Serial.println(text);
+  }
+}
+void Serial_println(int text) {
+  if (Debug_print) {
+    Serial.println(text);
+  }
+}
+void Serial_println(long text) {
+  if (Debug_print) {
+    Serial.println(text);
+  }
+}
+void Serial_println(unsigned long text) {
+  if (Debug_print) {
+    Serial.println(text);
+  }
+}
+
+
+// ฟังค์ชั่น save eerom แบบยาว(ไม่ต้องไปยุ่งอะไรกับมัน)
+void EEPROMWritelong(int address, unsigned long value)
+{
+  //Decomposition from a long to 4 bytes by using bitshift.
+  //One = Most significant -> Four = Least significant byte
+  byte four = (value & 0xFF);
+  byte three = ((value >> 8) & 0xFF);
+  byte two = ((value >> 16) & 0xFF);
+  byte one = ((value >> 24) & 0xFF);
+
+  //Write the 4 bytes into the eeprom memory.
+  EEPROM.write(address, four);
+  EEPROM.write(address + 1, three);
+  EEPROM.write(address + 2, two);
+  EEPROM.write(address + 3, one);
+}
+
+//This function will return a 4 byte (32bit) long from the eeprom
+//at the specified address to address + 3.
+unsigned long EEPROMReadlong(unsigned long address)
+{
+  //Read the 4 bytes from the eeprom memory.
+  unsigned long four = EEPROM.read(address);
+  unsigned long three = EEPROM.read(address + 1);
+  unsigned long two = EEPROM.read(address + 2);
+  unsigned long one = EEPROM.read(address + 3);
+
+  //Return the recomposed long by using bitshift.
+  return ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
+}
